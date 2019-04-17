@@ -1,0 +1,32 @@
+void turn_on_led()
+{
+	if(x_axis == x_on && y_axis == y_on && z_axis == z_on )
+			set_rgbled_color_to(RGBLED_COLOR_BLACK);
+
+	if(x_axis == x_on &&  y_axis ==y_on && z_axis == z_off)
+			set_rgbled_color_to(RGBLED_COLOR_GREEN);
+
+
+	if(x_axis == x_on &&  y_axis ==y_off && z_axis == z_on)
+			set_rgbled_color_to(RGBLED_COLOR_BLUE);
+
+
+	if(x_axis == x_on &&  y_axis ==y_off && z_axis == z_off)
+			set_rgbled_color_to(RGBLED_COLOR_YELLOW);
+
+
+	if(x_axis == x_off && y_axis == y_on && z_axis == z_on)
+			set_rgbled_color_to(RGBLED_COLOR_CYAN);
+
+
+	if(x_axis == x_off && y_axis == y_on && z_axis == z_off)
+			set_rgbled_color_to(RGBLED_COLOR_RED);
+
+	if(x_axis == x_off &&  y_axis ==y_off && z_axis == z_on)
+			set_rgbled_color_to(RGBLED_COLOR_MAGENTA);
+
+	if(x_axis == x_off && y_axis == y_off && z_axis == z_off)
+			set_rgbled_color_to(RGBLED_COLOR_WHITE);
+
+
+}
