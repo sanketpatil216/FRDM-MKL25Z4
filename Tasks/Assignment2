@@ -1,1 +1,150 @@
 
+//Sanket Patil. This is the assignment file that controls all the modes by looking at the switch.
+
+#include "sw1.h"
+#include "rgbled.h"
+#include<stdint.h>
+
+#define SECOND 160000
+#define HALF_SECOND 80000
+#define QUARTER_SECOND 40000
+#define FIVE_SECOND 5*SECOND
+
+void read_switch();
+void select_mode();
+void select_color();
+void flash_led();
+
+enum MODE { SELECT_MODE, FLASH_MODE} g_mode=FLASH_MODE;
+enum STATE { DOWN, RELEASED, UP, PRESSED} next_state= UP;
+
+uint32_t g_time=0;
+static int time=0;
+uint8_t g_color=7;
+
+void main()
+
+{
+	configure_sw1();
+	initialize_rgbled();
+	while(1)
+		{
+			read_switch();
+			select_mode();
+			select_color();
+			flash_led();
+		}
+
+}
+
+void select_mode()
+
+	{
+		if(next_state == DOWN  && g_time > SECOND)
+			g_mode = SELECT_MODE;
+
+		if(g_mode == SELECT_MODE && g_time > FIVE_SECOND)
+			g_mode = FLASH_MODE;
+
+	}
+
+
+void select_color()
+	{
+		if(g_mode == SELECT_MODE)
+			{
+			time = (time+1)%HALF_SECOND;
+
+			if(time < QUARTER_SECOND)
+
+				set_rgbled_color_to(g_color);
+			else
+
+				set_rgbled_color_to(RGBLED_COLOR_BLACK);
+
+			if(next_state == PRESSED)
+				{
+					g_color=(g_color+1)%8;
+					if(g_color == 0 )
+						g_color = 1;
+
+				}
+			}
+	}
+
+void flash_led()
+
+	{
+		if(g_mode == FLASH_MODE)
+			{
+			static int duty_cycle=15;
+				time = (time+1)%SECOND;
+
+				if(next_state == PRESSED)
+    			             duty_cycle= (duty_cycle-1)%15;
+
+		                if(duty_cycle== -1)
+                                       duty_cycle = 15;
+
+				if(time< duty_cycle*(SECOND/16))
+					set_rgbled_color_to(g_color);
+				else
+
+					set_rgbled_color_to(RGBLED_COLOR_BLACK);
+
+			}
+	}
+
+void read_switch()
+
+	{
+		switch(next_state)
+			{
+				case UP:
+
+					if(sw1_is_pressed())
+						next_state= PRESSED;
+					else
+						{
+							next_state= UP;
+							g_time++;
+						}
+					break;
+				case PRESSED:
+
+					g_time=0;
+					next_state= DOWN;
+					break;
+
+				case DOWN:
+
+					if(sw1_is_pressed())
+						{
+							next_state = DOWN;
+							g_time++;
+						}
+					else
+							next_state=RELEASED;
+					break;
+
+
+				case RELEASED:
+
+					g_time=0;
+					next_state=UP;
+					break;
+
+				default: ;
+
+	}
+
+}
+
+
+
+
+
+
+
+
+
