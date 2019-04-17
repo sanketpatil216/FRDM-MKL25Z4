@@ -1,0 +1,114 @@
+//Sanket Prakash Patil & Sagar Bhatnagar
+//used acclerometer, switch as interrupt to control axis, and rgbled to change color depending on the angle.
+
+
+#include <MKL25Z4.h>
+#include "i2c.h"
+#include "rgbled.h"
+#include <stdint.h>
+#include "sw.h"
+#include "watchdog.h"
+
+void initialize_accel_values();
+void led_pattern();
+void select_axis();
+int temp, g_xaxis, g_yaxis, g_zaxis = 0;
+static enum axis { x_s, y_s , z_s } axis= x_s;
+
+
+void main ()
+{
+	__disable_irq();
+	
+	initialize_rgbled();
+	initialize_sw();
+	initialize_i2c0();
+	initialize_wd();
+
+	__enable_irq();
+
+	while(1)
+	{
+		service_wd();
+		initialize_accel_values();
+		select_axis();
+		led_pattern();
+
+	}
+
+}
+
+void initialize_accel_values()     // get values from acclerometer.
+{
+	static uint8_t accel_data[3] = {0, 0, 0};
+	i2c0_write_bytes(0x3a, 0x2a, 0x03);
+	if( i2c0_read_byte(0x3a, 0x00) & (1<<3) )
+	
+		{
+			i2c0_read_bytes(0x3a, 0x01, 3,(uint8_t *) accel_data);
+			g_xaxis= (accel_data[0]);
+			g_yaxis= (accel_data[1]);
+			g_zaxis= (accel_data[2]);
+	
+		}
+}
+
+
+void led_pattern()      // color pattern depending on angle
+{
+	if( temp > 0 && temp < 30)
+		 set_rgbled_color_to(RGBLED_COLOR_WHITE);
+
+	if( temp > 30 && temp < 60)
+		 set_rgbled_color_to(RGBLED_COLOR_CYAN);
+
+	if(temp > 60 && temp < 70)
+		 set_rgbled_color_to(RGBLED_COLOR_YELLOW);
+
+	if(temp > 215 && temp < 245)
+		 set_rgbled_color_to(RGBLED_COLOR_MAGENTA);
+
+	if( temp > 185 && temp < 195 )
+		 set_rgbled_color_to(RGBLED_COLOR_BLUE);
+
+	if( temp > 195 && temp < 215 )
+		 set_rgbled_color_to(RGBLED_COLOR_RED);
+
+	if( temp > 245 && temp < 255) 
+		 set_rgbled_color_to(RGBLED_COLOR_GREEN);
+
+}
+
+void select_axis()   // select one of the three axis. used interrupt switch to do that. 
+{
+
+	switch(axis)
+		{
+		case x_s: 
+			temp = g_xaxis;
+			if(get_and_clear_switch_count())
+			{
+				axis= y_s;
+				temp = g_yaxis;
+			}
+			break;
+		case y_s: 
+			temp = g_yaxis;
+			if(get_and_clear_switch_count())
+			{	axis= z_s;
+				temp = g_zaxis;
+			}
+			break;
+		case z_s: 
+			temp = g_zaxis;
+			if(get_and_clear_switch_count())
+			{
+				axis= x_s;
+				temp = g_xaxis;
+			}
+			break;
+	default: ;
+		}
+}
+
+
