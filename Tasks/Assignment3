@@ -1,0 +1,204 @@
+//Sanket Patil. This is my assingment 3 file.
+
+#include "sw1.h"
+#include "rgbled.h"
+#include<stdint.h>
+
+#define SECOND 120000
+#define HALF_SECOND 60000
+#define QUARTER_SECOND 30000
+#define FIVE_SECOND 5*SECOND
+#define THREE_SECOND 3*SECOND
+
+void read_switch();
+void select_mode();
+void select_color();
+void flash_led();
+void select_dim();
+void flash_rgbled();
+void dim_led();
+
+
+enum MODE { SELECT_MODE, FLASH_MODE, DIM_MODE} g_mode=FLASH_MODE;
+enum STATE { DOWN, RELEASED, UP, PRESSED} next_state= UP;
+enum DIM { DIM_ON, DIM_OFF } dim_state= DIM_OFF;
+enum FLASH_STATE { FLASH_ON , FLASH_OFF } g_flash_state = FLASH_ON;
+
+uint32_t g_time=0;
+static int time=0, time1=0;
+uint8_t g_color=7;
+
+void main()
+
+{
+	configure_sw1();
+	initialize_rgbled();
+	while(1)
+		{
+			read_switch();
+			select_mode();
+			select_color();
+			select_dim();
+			flash_led();
+			dim_led();
+			flash_rgbled();
+		}
+}
+
+void read_switch()
+
+{
+	switch(next_state)
+		{
+			case UP:
+
+				if(sw1_is_pressed())
+					next_state= PRESSED;
+				else
+					{
+						next_state= UP;
+						g_time++;
+					}
+				break;
+			case PRESSED:
+				g_time=0;
+				next_state= DOWN;
+				break;
+
+			case DOWN:
+				if(sw1_is_pressed())
+					{
+						next_state = DOWN;
+						g_time++;
+					}
+				else
+						next_state=RELEASED;
+				break;
+
+			case RELEASED:
+				g_time=0;
+				next_state=UP;
+				break;
+
+			default: ;
+
+	}
+
+}
+
+void select_mode()
+
+{
+	if(next_state == DOWN  && g_time > SECOND)
+		g_mode = SELECT_MODE;
+
+	if(next_state == UP  && g_time > FIVE_SECOND)
+		g_mode = FLASH_MODE;
+
+	if(next_state == DOWN && g_time > THREE_SECOND)
+		g_mode = DIM_MODE;
+}
+
+void select_color()
+{
+	if(g_mode == SELECT_MODE)
+		{
+			time = (time+1)%HALF_SECOND;
+
+			if(time < QUARTER_SECOND)
+				g_flash_state = FLASH_ON;
+			else
+				g_flash_state = FLASH_OFF;
+
+			if(next_state == PRESSED)
+				{
+					g_color=(g_color+1)%8;
+					if(g_color == 0 )
+						g_color = 1;
+				}
+		}
+}
+
+void select_dim()
+{
+	if(g_mode == DIM_MODE)
+		{
+
+			switch(dim_state)
+				{
+					case DIM_ON:
+						g_flash_state= FLASH_ON;
+						if(next_state == PRESSED)
+							dim_state = DIM_OFF;
+						break;
+					case DIM_OFF:
+						set_rgbled_color_to(g_color);
+						if(next_state == PRESSED)
+							dim_state = DIM_ON;
+						break;
+					default: ;
+				}
+		}
+}
+
+void flash_led()
+{
+	if(g_mode == FLASH_MODE)
+		{
+			static int duty_cycle=15;
+			time = (time+1)%SECOND;
+
+			if(next_state == PRESSED)
+    		             duty_cycle= (duty_cycle-1)%15;
+
+			if(duty_cycle== -1)
+				duty_cycle = 15;
+
+			if(time< duty_cycle*(SECOND/16))
+				g_flash_state = FLASH_ON;
+			else
+				g_flash_state = FLASH_OFF;
+
+		}
+}
+
+
+void dim_led()
+{
+	if(dim_state == DIM_ON && g_flash_state== FLASH_ON)
+		{
+			if(time1 % 100 == 0)
+				g_flash_state= FLASH_ON;
+			else
+				g_flash_state= FLASH_OFF;
+			time1++;
+
+		}
+}
+
+
+void flash_rgbled()
+{
+	static enum { LED_ON, LED_OFF } led_state= LED_OFF;
+	switch(led_state)
+		{
+			case LED_ON:
+				 if(g_flash_state == FLASH_OFF )
+					{
+						set_rgbled_color_to(RGBLED_COLOR_BLACK);
+						led_state= LED_OFF;
+					}
+				break;
+
+			case LED_OFF:
+				if(g_flash_state == FLASH_ON)
+					{
+						set_rgbled_color_to(g_color);
+						led_state = LED_ON;
+					}
+				break;
+			default: ;
+		}
+}
+
+
