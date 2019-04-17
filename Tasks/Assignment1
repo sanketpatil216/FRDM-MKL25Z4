@@ -1,0 +1,50 @@
+//Sanket Patil. This the assignment file which will control the Switch and the RGBLED.
+//Used switch case along with a counter that will toggle through the led colors.
+
+#include "sw1.h"
+#include "rgbled.h"
+
+void main()
+
+{
+	configure_sw1();
+	int x=0;
+	initialize_rgbled();
+		while(1)
+		{
+
+			sw1_wait_for_press_release();
+			x=(x+1)%8;
+
+				switch(x)
+					{
+						case(0):
+							set_rgbled_color_to(RGBLED_COLOR_BLUE);
+							break;
+						case(1):
+	                                        	set_rgbled_color_to(RGBLED_COLOR_GREEN);
+	                                       		break;
+						case(2):
+	                                	        set_rgbled_color_to(RGBLED_COLOR_CYAN);
+	                        	                break;
+						case(3):
+	        	                                set_rgbled_color_to(RGBLED_COLOR_RED);
+		     	                                break;
+						case(4):
+		                                        set_rgbled_color_to(RGBLED_COLOR_MAGENTA);
+		                                        break;
+						case(5):
+		                                        set_rgbled_color_to(RGBLED_COLOR_YELLOW);
+	                                        	break;
+					 	case(6):
+	       	                                	set_rgbled_color_to(RGBLED_COLOR_WHITE);
+	                                        	break;
+
+						case(7):
+						default:
+	                                	        set_rgbled_color_to(RGBLED_COLOR_BLACK);
+	                                   		break;
+					}
+		}
+}
+
