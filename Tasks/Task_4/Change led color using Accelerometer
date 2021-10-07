@@ -1,4 +1,4 @@
-//Sanket Prakash Patil & Sagar Bhatnagar
+//Sanket Prakash Patil
 //used acclerometer, switch as interrupt to control axis, and rgbled to change color depending on the angle.
 
 
